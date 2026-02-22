@@ -19,9 +19,10 @@ button.secondary{background:#374151;}
 .topnav{display:flex;background:#0b1220;border-bottom:1px solid #1f2937;}
 .topnav button{flex:1;background:none;color:#9ca3af;}
 .topnav button.active{color:#22c55e;font-weight:700;}
-select,textarea{width:100%;margin-top:8px;padding:8px;border-radius:8px;border:none;}
-.meal-block{margin-top:10px;padding:10px;background:#1f2937;border-radius:10px;}
-.meal-title{font-weight:700;margin-bottom:5px;}
+select,textarea,input{width:100%;margin-top:8px;padding:8px;border-radius:8px;border:none;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th,td{border:1px solid #1f2937;padding:6px;text-align:center;vertical-align:top;}
+.compra-item{display:flex;justify-content:space-between;align-items:center;margin:6px 0;}
 </style>
 </head>
 <body>
@@ -42,22 +43,43 @@ select,textarea{width:100%;margin-top:8px;padding:8px;border-radius:8px;border:n
 <div class="topnav">
 <button id="tabHome" class="active">Home</button>
 <button id="tabEditar">Editar</button>
+<button id="tabCompra">Compra</button>
 <button id="logoutBtn">Salir</button>
 </div>
 
+<!-- HOME -->
 <div id="home" class="container">
-<div id="planVisual"></div>
-</div>
-
-<div id="editar" class="container hidden">
-<div class="card">
-<select id="personaSelect">
+<select id="perfilHome">
 <option value="Luismi">Luismi</option>
 <option value="Natalia">Natalia</option>
 </select>
-<select id="diaSelect"></select>
-<div id="editorComidas"></div>
-<button onclick="guardarCambios()">Guardar Cambios</button>
+<div id="tablaResumen"></div>
+</div>
+
+<!-- EDITAR -->
+<div id="editar" class="container hidden">
+<div class="card">
+<select id="perfilEditar">
+<option value="Luismi">Luismi</option>
+<option value="Natalia">Natalia</option>
+</select>
+<select id="diaEditar"></select>
+<textarea id="desayuno" placeholder="Desayuno"></textarea>
+<textarea id="comida" placeholder="Comida"></textarea>
+<textarea id="cena" placeholder="Cena"></textarea>
+<button onclick="guardarPlan()">Guardar</button>
+</div>
+</div>
+
+<!-- COMPRA -->
+<div id="compra" class="container hidden">
+<div class="card">
+<h3>Compra automática</h3>
+<div id="listaAuto"></div>
+<h3 style="margin-top:20px;">Extras</h3>
+<div id="listaExtras"></div>
+<input type="text" id="nuevoExtra" placeholder="Añadir extra">
+<button onclick="addExtra()">Añadir</button>
 </div>
 </div>
 
@@ -73,153 +95,160 @@ projectId:"nutriapp-2eeb3"
 };
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
+const db=firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-// DIAS
 const dias=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-dias.forEach(d=>diaSelect.innerHTML+=`<option>${d}</option>`);
+dias.forEach(d=>diaEditar.innerHTML+=`<option>${d}</option>`);
 
-// PLAN COMPLETO
-let planSemanal={
+// 🔥 TU MENÚ PRECARGADO
+const menuInicial = {
 Luismi:{
 Lunes:{
-Desayuno:["250 g queso fresco batido","80 g avena","30 g whey","15 g crema cacahuete","1 plátano"],
-Media:["30 g whey"],
-Comida:["220 g pechuga pollo","100 g arroz crudo","250 g verduras","10 g AOVE"],
-Merienda:["200 g yogur griego","15 g nueces"],
-Cena:["200 g salmón","300 g calabacín","200 g patata"]
+Desayuno:`250 g queso fresco batido\n80 g avena\n30 g whey\n15 g crema cacahuete\n1 plátano`,
+Comida:`220 g pechuga pollo\n100 g arroz crudo\n250 g verduras\n10 g AOVE`,
+Cena:`200 g salmón\n300 g calabacín\n200 g patata`
 },
 Martes:{
-Desayuno:["Igual lunes"],
-Comida:["220 g ternera","400 g patata","250 g espinaca"],
-Cena:["3 huevos","200 g claras","250 g verduras","150 g queso fresco","60 g pan"]
+Desayuno:`Igual lunes`,
+Comida:`220 g ternera\n400 g patata\n250 g espinaca`,
+Cena:`3 huevos\n200 g claras\n250 g verduras\n150 g queso fresco\n60 g pan`
 },
 Miércoles:{
-Desayuno:["Igual lunes"],
-Comida:["220 g pavo","100 g couscous crudo","250 g verduras"],
-Cena:["220 g carne picada 5%","2 pitas integrales","200 g verduras","30 g tomate"]
+Desayuno:`Igual lunes`,
+Comida:`220 g pavo\n100 g couscous\n250 g verduras`,
+Cena:`220 g carne picada\n2 pitas integrales\n200 g verduras\n30 g tomate`
 },
 Jueves:{
-Desayuno:["Igual lunes"],
-Comida:["220 g salmón","90 g arroz crudo","250 g verduras"],
-Cena:["400 ml crema calabacín","200 g pollo","60 g pan"]
+Desayuno:`Igual lunes`,
+Comida:`220 g salmón\n90 g arroz\n250 g verduras`,
+Cena:`400 ml crema calabacín\n200 g pollo\n60 g pan`
 },
 Viernes:{
-Desayuno:["Igual lunes"],
-Comida:["90 g lenteja cruda","180 g pollo","250 g verduras"],
-Cena:["220 g pescado blanco","300 g patata","250 g verduras"]
+Desayuno:`Igual lunes`,
+Comida:`90 g lenteja cruda\n180 g pollo\n250 g verduras`,
+Cena:`220 g pescado blanco\n300 g patata\n250 g verduras`
 },
 Sábado:{
-Desayuno:["Igual lunes"],
-Comida:["250 g carne","350 g boniato","250 g verduras"],
-Cena:["3 huevos","200 g gambas","250 g espárragos","60 g pan"]
+Desayuno:`Igual lunes`,
+Comida:`250 g carne\n350 g boniato\n250 g verduras`,
+Cena:`3 huevos\n200 g gambas\n250 g espárragos\n60 g pan`
 },
 Domingo:{
-Desayuno:["Igual lunes"],
-Comida:["110 g arroz","3 huevos","200 g gambas","250 g verduras"],
-Cena:["400 ml crema","200 g pavo","pan si entrenaste"]
+Desayuno:`Igual lunes`,
+Comida:`110 g arroz\n3 huevos\n200 g gambas\n250 g verduras`,
+Cena:`400 ml crema\n200 g pavo\npan`
 }
 },
 Natalia:{
 Lunes:{
-Desayuno:["60 g avena","200 ml leche sin lactosa","20 g whey","15 g nueces","½ plátano"],
-Comida:["130 g pollo","70 g arroz crudo","200 g verduras","10 g AOVE"],
-Cena:["140 g salmón","250 g calabacín","150 g patata"]
+Desayuno:`60 g avena\n200 ml leche\n20 g whey\n15 g nueces\n½ plátano`,
+Comida:`130 g pollo\n70 g arroz crudo\n200 g verduras\n10 g AOVE`,
+Cena:`140 g salmón\n250 g calabacín\n150 g patata`
 },
 Martes:{
-Desayuno:["Igual lunes"],
-Comida:["120 g ternera","300 g patata","200 g espinaca"],
-Cena:["2 huevos","150 g claras","200 g calabacín","100 g queso fresco"]
+Desayuno:`Igual lunes`,
+Comida:`120 g ternera\n300 g patata\n200 g espinaca`,
+Cena:`2 huevos\n150 g claras\n200 g calabacín\n100 g queso fresco`
 },
 Miércoles:{
-Desayuno:["Igual lunes"],
-Comida:["130 g pavo","70 g couscous crudo","200 g verduras"],
-Cena:["120 g carne picada","1 pita integral","150 g verduras","20 g tomate"]
+Desayuno:`Igual lunes`,
+Comida:`130 g pavo\n70 g couscous\n200 g verduras`,
+Cena:`120 g carne picada\n1 pita integral\n150 g verduras\n20 g tomate`
 },
 Jueves:{
-Desayuno:["Igual lunes"],
-Comida:["140 g salmón","60 g arroz crudo","200 g verduras"],
-Cena:["350 ml crema calabacín","120 g pollo"]
+Desayuno:`Igual lunes`,
+Comida:`140 g salmón\n60 g arroz\n200 g verduras`,
+Cena:`350 ml crema calabacín\n120 g pollo`
 },
 Viernes:{
-Desayuno:["Igual lunes"],
-Comida:["60 g lenteja cruda","100 g pollo","200 g verduras"],
-Cena:["140 g dorada/lubina","200 g patata","200 g verduras"]
+Desayuno:`Igual lunes`,
+Comida:`60 g lenteja\n100 g pollo\n200 g verduras`,
+Cena:`140 g dorada\n200 g patata\n200 g verduras`
 },
 Sábado:{
-Desayuno:["Igual lunes"],
-Comida:["130 g carne","250 g boniato","200 g verduras"],
-Cena:["2 huevos","120 g gambas","200 g espárragos"]
+Desayuno:`Igual lunes`,
+Comida:`130 g carne\n250 g boniato\n200 g verduras`,
+Cena:`2 huevos\n120 g gambas\n200 g espárragos`
 },
 Domingo:{
-Desayuno:["Igual lunes"],
-Comida:["70 g arroz","2 huevos","120 g gambas","200 g verduras"],
-Cena:["350 ml crema","120 g pavo"]
+Desayuno:`Igual lunes`,
+Comida:`70 g arroz\n2 huevos\n120 g gambas\n200 g verduras`,
+Cena:`350 ml crema\n120 g pavo`
 }
 }
 };
 
-// AUTH
-auth.onAuthStateChanged(user=>{
-if(user){
-loginScreen.classList.add("hidden");
-app.classList.remove("hidden");
-renderHome();
-}else{
-loginScreen.classList.remove("hidden");
-app.classList.add("hidden");
+// Cargar menú si no existe en Firestore
+async function inicializarMenu(){
+for(let perfil in menuInicial){
+for(let dia in menuInicial[perfil]){
+const ref=db.collection("planes").doc(perfil+"_"+dia);
+const doc=await ref.get();
+if(!doc.exists){
+await ref.set(menuInicial[perfil][dia]);
 }
+}
+}
+}
+
+// HOME
+async function renderHome(){
+const perfil=perfilHome.value;
+let html="<table><tr><th></th>";
+dias.forEach(d=>html+=`<th>${d}</th>`);
+html+="</tr>";
+for(let tipo of ["Desayuno","Comida","Cena"]){
+html+=`<tr><th>${tipo}</th>`;
+for(let dia of dias){
+const doc=await db.collection("planes").doc(perfil+"_"+dia).get();
+html+=`<td>${doc.exists?doc.data()[tipo]||"":""}</td>`;
+}
+html+="</tr>";
+}
+html+="</table>";
+tablaResumen.innerHTML=html;
+}
+perfilHome.onchange=renderHome;
+
+// EDITAR
+async function guardarPlan(){
+const perfil=perfilEditar.value;
+const dia=diaEditar.value;
+await db.collection("planes").doc(perfil+"_"+dia).set({
+Desayuno:desayuno.value,
+Comida:comida.value,
+Cena:cena.value
 });
-
-loginBtn.onclick=()=>auth.signInWithEmailAndPassword(email.value,password.value).catch(e=>loginError.innerText=e.message);
-googleBtn.onclick=async()=>{
-const provider=new firebase.auth.GoogleAuthProvider();
-await auth.signInWithPopup(provider);
-};
-logoutBtn.onclick=()=>auth.signOut();
-
-// VISUALIZAR
-function renderHome(){
-let html="";
-for(let persona in planSemanal){
-html+=`<h3>${persona}</h3>`;
-for(let dia in planSemanal[persona]){
-html+=`<div class="card"><b>${dia}</b>`;
-for(let comida in planSemanal[persona][dia]){
-html+=`<div class="meal-block"><div class="meal-title">${comida}</div>${planSemanal[persona][dia][comida].join("<br>")}</div>`;
-}
-html+="</div>";
-}
-}
-planVisual.innerHTML=html;
-}
-
-// EDITOR
-personaSelect.onchange=renderEditor;
-diaSelect.onchange=renderEditor;
-
-function renderEditor(){
-const p=personaSelect.value;
-const d=diaSelect.value;
-if(!planSemanal[p][d]) return;
-let html="";
-for(let comida in planSemanal[p][d]){
-html+=`<div class="meal-block"><div class="meal-title">${comida}</div>
-<textarea id="edit_${comida}">${planSemanal[p][d][comida].join("\n")}</textarea>
-</div>`;
-}
-editorComidas.innerHTML=html;
-}
-
-function guardarCambios(){
-const p=personaSelect.value;
-const d=diaSelect.value;
-for(let comida in planSemanal[p][d]){
-let texto=document.getElementById("edit_"+comida).value;
-planSemanal[p][d][comida]=texto.split("\n");
-}
 renderHome();
 alert("Guardado");
+}
+
+// COMPRA
+async function renderCompra(){
+const perfil=perfilHome.value;
+let suma={};
+for(let dia of dias){
+const doc=await db.collection("planes").doc(perfil+"_"+dia).get();
+if(doc.exists){
+for(let tipo of ["Desayuno","Comida","Cena"]){
+let texto=doc.data()[tipo]||"";
+texto.split("\n").forEach(l=>{
+let m=l.match(/(\d+)\s*g\s*(.+)/i);
+if(m){
+let g=parseInt(m[1]);
+let alimento=m[2].trim();
+suma[alimento]=(suma[alimento]||0)+g;
+}
+});
+}
+}
+}
+let html="";
+for(let item in suma){
+html+=`<div class="compra-item"><span>${item} - ${suma[item]} g</span><input type="checkbox"></div>`;
+}
+listaAuto.innerHTML=html;
 }
 
 // NAV
@@ -227,11 +256,27 @@ function activar(tab){
 document.querySelectorAll(".topnav button").forEach(b=>b.classList.remove("active"));
 home.classList.add("hidden");
 editar.classList.add("hidden");
+compra.classList.add("hidden");
 if(tab==="home"){tabHome.classList.add("active");home.classList.remove("hidden");}
 if(tab==="editar"){tabEditar.classList.add("active");editar.classList.remove("hidden");}
+if(tab==="compra"){tabCompra.classList.add("active");compra.classList.remove("hidden");renderCompra();}
 }
 tabHome.onclick=()=>activar("home");
 tabEditar.onclick=()=>activar("editar");
+tabCompra.onclick=()=>activar("compra");
+
+auth.onAuthStateChanged(async user=>{
+if(user){
+loginScreen.classList.add("hidden");
+app.classList.remove("hidden");
+await inicializarMenu();
+renderHome();
+}
+});
+
+loginBtn.onclick=()=>auth.signInWithEmailAndPassword(email.value,password.value);
+googleBtn.onclick=async()=>{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider);};
+logoutBtn.onclick=()=>auth.signOut();
 
 </script>
 
