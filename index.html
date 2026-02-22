@@ -57,6 +57,7 @@ button.secondary{background:#374151;}
 }
 .topnav button.active{
   color:#22c55e;
+  font-weight:700;
 }
 table{
   width:100%;
@@ -73,6 +74,12 @@ input, select, textarea{
   margin-top:8px;
   border-radius:10px;
   border:none;
+}
+.compra-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:8px 0;
 }
 </style>
 </head>
@@ -97,9 +104,11 @@ input, select, textarea{
 <div class="topnav">
   <button id="tabHome" class="active">Home</button>
   <button id="tabPlan">Plan</button>
+  <button id="tabCompra">Compra</button>
   <button id="logoutBtn">Salir</button>
 </div>
 
+<!-- HOME -->
 <div id="home" class="container">
   <div class="card">
     <select id="perfilHome">
@@ -110,6 +119,7 @@ input, select, textarea{
   </div>
 </div>
 
+<!-- PLAN -->
 <div id="plan" class="container hidden">
   <div class="card">
     <select id="perfil">
@@ -121,6 +131,14 @@ input, select, textarea{
     <textarea id="comida" placeholder="Comida"></textarea>
     <textarea id="cena" placeholder="Cena"></textarea>
     <button id="guardarBtn">Guardar</button>
+  </div>
+</div>
+
+<!-- COMPRA -->
+<div id="compra" class="container hidden">
+  <div class="card">
+    <h3>Lista de la Compra</h3>
+    <div id="listaCompra"></div>
   </div>
 </div>
 
@@ -151,11 +169,8 @@ const dias = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Doming
 const diaEl = document.getElementById("dia");
 dias.forEach(d => diaEl.innerHTML += `<option>${d}</option>`);
 
-// ===== AUTH LISTENER (ÚNICO Y CORRECTO) =====
+// ===== AUTH =====
 auth.onAuthStateChanged(async (user) => {
-
-  console.log("Estado auth:", user);
-
   if (user) {
     loginScreen.classList.add("hidden");
     app.classList.remove("hidden");
@@ -164,40 +179,47 @@ auth.onAuthStateChanged(async (user) => {
     loginScreen.classList.remove("hidden");
     app.classList.add("hidden");
   }
-
 });
 
-// ===== LOGIN EMAIL =====
 loginBtn.onclick = () => {
   auth.signInWithEmailAndPassword(email.value,password.value)
   .catch(e => loginError.innerText = e.message);
 };
 
-// ===== REGISTER =====
 registerBtn.onclick = () => {
   auth.createUserWithEmailAndPassword(email.value,password.value)
   .catch(e => loginError.innerText = e.message);
 };
 
-// ===== GOOGLE LOGIN (POPUP) =====
 googleBtn.onclick = async () => {
-
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-
   try {
-    const result = await auth.signInWithPopup(provider);
-    console.log("Login correcto:", result.user.email);
+    await auth.signInWithPopup(provider);
   } catch (error) {
     loginError.innerText = error.message;
   }
-
 };
 
-// ===== LOGOUT =====
 logoutBtn.onclick = () => auth.signOut();
 
-// ===== DATA =====
+// ===== NAVEGACIÓN =====
+function activarTab(tab){
+  document.querySelectorAll(".topnav button").forEach(b=>b.classList.remove("active"));
+  home.classList.add("hidden");
+  plan.classList.add("hidden");
+  compra.classList.add("hidden");
+
+  if(tab==="home"){ tabHome.classList.add("active"); home.classList.remove("hidden"); }
+  if(tab==="plan"){ tabPlan.classList.add("active"); plan.classList.remove("hidden"); }
+  if(tab==="compra"){ tabCompra.classList.add("active"); compra.classList.remove("hidden"); renderListaCompra(); }
+}
+
+tabHome.onclick = ()=>activarTab("home");
+tabPlan.onclick = ()=>activarTab("plan");
+tabCompra.onclick = ()=>activarTab("compra");
+
+// ===== PLAN =====
 async function savePlan(){
   const user = auth.currentUser;
   await db.collection("plans").doc(user.uid).set({
@@ -209,7 +231,6 @@ async function savePlan(){
   },{merge:true});
   loadPlan();
 }
-
 guardarBtn.onclick = savePlan;
 
 async function loadPlan(){
@@ -235,11 +256,37 @@ function renderHome(data={}){
   html+="</table>";
   tablaSemanal.innerHTML=html;
 }
-
 perfilHome.onchange=loadPlan;
 
-tabHome.onclick=()=>{home.classList.remove("hidden");plan.classList.add("hidden");};
-tabPlan.onclick=()=>{home.classList.add("hidden");plan.classList.remove("hidden");};
+// ===== LISTA COMPRA =====
+const listaBase = [
+"Pechuga de pollo","Salmón","Ternera magra","Huevos",
+"Claras líquidas","Arroz","Patata","Boniato",
+"Verdura variada","Fruta variada","Kéfir",
+"Frutos secos","Pan integral","Tortitas arroz"
+];
+
+async function renderListaCompra(){
+  const doc = await db.collection("compra").doc("lista").get();
+  const datos = doc.exists ? doc.data() : {};
+  let html="";
+  listaBase.forEach(item=>{
+    const checked = datos[item] ? "checked" : "";
+    html += `<div class="compra-item">
+      <span>${item}</span>
+      <input type="checkbox" ${checked} onchange="toggleItem('${item}')">
+    </div>`;
+  });
+  listaCompra.innerHTML=html;
+}
+
+async function toggleItem(item){
+  const ref=db.collection("compra").doc("lista");
+  const doc=await ref.get();
+  const datos=doc.exists?doc.data():{};
+  await ref.set({[item]:!datos[item]},{merge:true});
+  renderListaCompra();
+}
 
 // SERVICE WORKER
 if ('serviceWorker' in navigator) {
