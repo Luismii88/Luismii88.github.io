@@ -213,15 +213,28 @@ perfilHome.onchange=renderHome;
 
 // EDITAR
 async function guardarPlan(){
-const perfil=perfilEditar.value;
-const dia=diaEditar.value;
-await db.collection("planes").doc(perfil+"_"+dia).set({
-Desayuno:desayuno.value,
-Comida:comida.value,
-Cena:cena.value
-});
-renderHome();
-alert("Guardado");
+
+  const perfil = perfilEditar.value;
+  const dia = diaEditar.value;
+
+  const ref = db.collection("planes").doc(perfil+"_"+dia);
+
+  let updates = {};
+
+  if(desayuno.value.trim() !== "")
+    updates.Desayuno = desayuno.value;
+
+  if(comida.value.trim() !== "")
+    updates.Comida = comida.value;
+
+  if(cena.value.trim() !== "")
+    updates.Cena = cena.value;
+
+  await ref.set(updates, { merge: true });
+
+  renderHome();
+  alert("Guardado correctamente");
+
 }
 
 // COMPRA
