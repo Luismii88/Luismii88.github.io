@@ -22,7 +22,24 @@ button.secondary{background:#374151;}
 select,textarea,input{width:100%;margin-top:8px;padding:8px;border-radius:8px;border:none;}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th,td{border:1px solid #1f2937;padding:6px;text-align:center;vertical-align:top;}
-.compra-item{display:flex;justify-content:space-between;align-items:center;margin:6px 0;}
+.compra-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 0;
+  border-bottom:1px solid #1f2937;
+  width:100%;
+}
+
+.compra-item span{
+  flex:1;
+  text-align:left;
+}
+
+.compra-item input{
+  margin-left:15px;
+  transform:scale(1.2);
+}
 </style>
 </head>
 <body>
@@ -263,31 +280,54 @@ diaEditar.onchange = cargarPlanEnEditor;
   
 // COMPRA
 async function renderCompra(){
-const perfil=perfilHome.value;
-let suma={};
-for(let dia of dias){
-const doc=await db.collection("planes").doc(perfil+"_"+dia).get();
-if(doc.exists){
-for(let tipo of ["Desayuno","Comida","Cena"]){
-let texto=doc.data()[tipo]||"";
-texto.split("\n").forEach(l=>{
-let m=l.match(/(\d+)\s*g\s*(.+)/i);
-if(m){
-let g=parseInt(m[1]);
-let alimento=m[2].trim();
-suma[alimento]=(suma[alimento]||0)+g;
-}
-});
-}
-}
-}
-let html="";
-for(let item in suma){
-html+=`<div class="compra-item"><span>${item} - ${suma[item]} g</span><input type="checkbox"></div>`;
-}
-listaAuto.innerHTML=html;
-}
 
+  const perfil = perfilHome.value;
+  let suma = {};
+
+  // 🔹 Sumar gramos automáticamente
+  for(let dia of dias){
+    const doc = await db.collection("planes").doc(perfil+"_"+dia).get();
+    if(doc.exists){
+      for(let tipo of ["Desayuno","Comida","Cena"]){
+        let texto = doc.data()[tipo] || "";
+        texto.split("\n").forEach(l=>{
+          let m = l.match(/(\d+)\s*g\s*(.+)/i);
+          if(m){
+            let gramos = parseInt(m[1]);
+            let alimento = m[2].trim().toLowerCase();
+            suma[alimento] = (suma[alimento]||0) + gramos;
+          }
+        });
+      }
+    }
+  }
+
+  const checksRef = db.collection("checks").doc("compra_"+perfil);
+  const checksDoc = await checksRef.get();
+  const checks = checksDoc.exists ? checksDoc.data() : {};
+
+  let html = "";
+
+  for(let item in suma){
+
+    let cantidad = suma[item];
+    let textoCantidad = cantidad >= 1000 
+      ? (cantidad/1000).toFixed(2)+" kg"
+      : cantidad+" g";
+
+    let checked = checks[item] ? "checked" : "";
+
+    html += `
+      <div class="compra-item">
+        <span>${item} - ${textoCantidad}</span>
+        <input type="checkbox" ${checked} 
+          onchange="toggleCheck('${item}')">
+      </div>
+    `;
+  }
+
+  listaAuto.innerHTML = html;
+}
 // NAV
 function activar(tab){
 document.querySelectorAll(".topnav button").forEach(b=>b.classList.remove("active"));
