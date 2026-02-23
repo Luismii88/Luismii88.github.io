@@ -226,7 +226,10 @@ html+="</tr>";
 html+="</table>";
 tablaResumen.innerHTML=html;
 }
-perfilHome.onchange=renderHome;
+perfilHome.onchange = () => {
+  renderHome();
+  renderCompra();
+};
 
 // EDITAR
 async function guardarPlan(){
@@ -328,6 +331,21 @@ async function renderCompra(){
 
   listaAuto.innerHTML = html;
 }
+
+async function toggleCheck(item){
+
+  const perfil = perfilHome.value;
+  const ref = db.collection("checks").doc("compra_"+perfil);
+
+  const doc = await ref.get();
+  let data = doc.exists ? doc.data() : {};
+
+  data[item] = !data[item];
+
+  await ref.set(data);
+
+}
+
 // NAV
 function activar(tab){
 document.querySelectorAll(".topnav button").forEach(b=>b.classList.remove("active"));
