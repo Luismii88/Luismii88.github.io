@@ -482,26 +482,35 @@ async function toggleCheck(item){
 
 // NAV
 function activar(tab){
-document.querySelectorAll(".topnav button").forEach(b=>b.classList.remove("active"));
-home.classList.add("hidden");
-editar.classList.add("hidden");
-compra.classList.add("hidden");
-if(tab==="home"){tabHome.classList.add("active");home.classList.remove("hidden");}
-if(tab==="editar"){tabEditar.classList.add("active");editar.classList.remove("hidden");}
-if(tab==="compra"){tabCompra.classList.add("active");compra.classList.remove("hidden");renderCompra();}
-}
-tabHome.onclick=()=>activar("home");
-tabEditar.onclick=()=>activar("editar");
-tabCompra.onclick=()=>activar("compra");
 
-auth.onAuthStateChanged(async user=>{
-if(user){
-loginScreen.classList.add("hidden");
-app.classList.remove("hidden");
-await inicializarMenu();
-renderHome();
+  document.querySelectorAll(".topnav button")
+    .forEach(b=>b.classList.remove("active"));
+
+  home.classList.add("hidden");
+  editar.classList.add("hidden");
+  compra.classList.add("hidden");
+
+  setTimeout(()=>{
+    if(tab==="home"){
+      tabHome.classList.add("active");
+      home.classList.remove("hidden");
+    }
+
+    if(tab==="editar"){
+      tabEditar.classList.add("active");
+      editar.classList.remove("hidden");
+      cargarPlanEnEditor();
+    }
+
+    if(tab==="compra"){
+      tabCompra.classList.add("active");
+      compra.classList.remove("hidden");
+      renderCompra();
+    }
+
+  },80);
+
 }
-});
 
 loginBtn.onclick=()=>auth.signInWithEmailAndPassword(email.value,password.value);
 googleBtn.onclick=async()=>{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider);};
