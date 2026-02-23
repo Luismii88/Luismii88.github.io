@@ -237,6 +237,27 @@ async function guardarPlan(){
 
 }
 
+async function cargarPlanEnEditor(){
+
+  const perfil = perfilEditar.value;
+  const dia = diaEditar.value;
+
+  const doc = await db.collection("planes")
+                      .doc(perfil + "_" + dia)
+                      .get();
+
+  if(doc.exists){
+    desayuno.value = doc.data().Desayuno || "";
+    comida.value   = doc.data().Comida   || "";
+    cena.value     = doc.data().Cena     || "";
+  } else {
+    desayuno.value = "";
+    comida.value   = "";
+    cena.value     = "";
+  }
+
+}
+
 // COMPRA
 async function renderCompra(){
 const perfil=perfilHome.value;
