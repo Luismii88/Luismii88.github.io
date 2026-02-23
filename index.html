@@ -10,37 +10,127 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:-apple-system;background:#0b1220;color:white;}
-.hidden{display:none;}
-.container{
-  padding:20px;
-  max-width:100%;
-  box-sizing:border-box;
-}
-.card{
-  background:#111827;
-  padding:20px;
-  border-radius:20px;
-  margin-bottom:20px;
-  box-sizing:border-box;
-  width:100%;
+:root{
+  --bg:#0f172a;
+  --card:#111827;
+  --accent:#22c55e;
+  --accent-soft:#16a34a;
+  --text:#f9fafb;
+  --muted:#9ca3af;
 }
 
-.card-full{
-  padding:0;
-  border-radius:0;
+body{
   margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, sans-serif;
+  background:linear-gradient(180deg,#0f172a,#0b1220);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
 }
-button{width:100%;padding:12px;border:none;border-radius:12px;margin-top:8px;background:#22c55e;color:white;font-weight:600;}
-button.secondary{background:#374151;}
-.topnav{display:flex;background:#0b1220;border-bottom:1px solid #1f2937;}
-.topnav button{flex:1;background:none;color:#9ca3af;}
-.topnav button.active{color:#22c55e;font-weight:700;}
-select,textarea,input{width:100%;margin-top:8px;padding:8px;border-radius:8px;border:none;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th,td{border:1px solid #1f2937;padding:6px;text-align:center;vertical-align:top;}
-#listaAuto, #listaExtras{
+
+.hidden{display:none;}
+
+.container{
+  padding:20px;
   width:100%;
+  box-sizing:border-box;
+  animation:fadeIn 0.25s ease;
+}
+
+.card{
+  background:var(--card);
+  padding:20px;
+  border-radius:24px;
+  margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 15px 40px rgba(0,0,0,0.5);
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:18px;
+  margin-top:10px;
+  background:var(--accent);
+  color:white;
+  font-weight:600;
+  font-size:15px;
+  transition:all 0.2s ease;
+}
+
+button:active{
+  transform:scale(0.97);
+  background:var(--accent-soft);
+}
+
+button.secondary{
+  background:#374151;
+}
+
+.topnav{
+  display:flex;
+  background:rgba(15,23,42,0.95);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid #1f2937;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topnav button{
+  flex:1;
+  background:none;
+  color:var(--muted);
+  font-size:14px;
+  padding:16px 0;
+  transition:all 0.2s ease;
+}
+
+.topnav button.active{
+  color:var(--accent);
+  font-weight:700;
+  border-bottom:3px solid var(--accent);
+}
+
+select,textarea,input{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:16px;
+  border:none;
+  background:#1f2937;
+  color:white;
+  font-size:14px;
+  transition:all 0.2s ease;
+}
+
+select:focus, textarea:focus, input:focus{
+  outline:none;
+  box-shadow:0 0 0 2px var(--accent);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  margin-top:15px;
+}
+
+th{
+  background:#1f2937;
+  font-weight:600;
+}
+
+th,td{
+  border:1px solid #1f2937;
+  padding:8px;
+  text-align:center;
+  vertical-align:top;
 }
 
 .compra-item{
@@ -52,6 +142,11 @@ th,td{border:1px solid #1f2937;padding:6px;text-align:center;vertical-align:top;
   width:100%;
   box-sizing:border-box;
   background:#111827;
+  transition:background 0.2s ease;
+}
+
+.compra-item:hover{
+  background:#1f2937;
 }
 
 .compra-text{
@@ -65,7 +160,14 @@ th,td{border:1px solid #1f2937;padding:6px;text-align:center;vertical-align:top;
   width:22px;
   height:22px;
   margin-left:20px;
-  flex-shrink:0;
+  accent-color:var(--accent);
+}
+
+/* Animaciones */
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(5px);}
+  to{opacity:1;transform:translateY(0);}
 }
 </style>
 </head>
