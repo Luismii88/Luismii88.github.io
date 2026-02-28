@@ -244,6 +244,36 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
+// 🔹 REFERENCIAS DOM
+const loginScreen = document.getElementById("loginScreen");
+const app = document.getElementById("app");
+
+const home = document.getElementById("home");
+const editar = document.getElementById("editar");
+const compra = document.getElementById("compra");
+
+const tabHome = document.getElementById("tabHome");
+const tabEditar = document.getElementById("tabEditar");
+const tabCompra = document.getElementById("tabCompra");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const perfilHome = document.getElementById("perfilHome");
+const perfilEditar = document.getElementById("perfilEditar");
+const diaEditar = document.getElementById("diaEditar");
+
+const desayuno = document.getElementById("desayuno");
+const comida = document.getElementById("comida");
+const cena = document.getElementById("cena");
+
+const tablaResumen = document.getElementById("tablaResumen");
+const listaAuto = document.getElementById("listaAuto");
+
+const loginBtn = document.getElementById("loginBtn");
+const googleBtn = document.getElementById("googleBtn");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const loginError = document.getElementById("loginError");
+
 auth.onAuthStateChanged(async (user) => {
 
   if(user){
