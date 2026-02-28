@@ -244,6 +244,20 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
+auth.onAuthStateChanged(async (user) => {
+
+  if(user){
+    loginScreen.classList.add("hidden");
+    app.classList.remove("hidden");
+    await inicializarMenu();
+    renderHome();
+  } else {
+    loginScreen.classList.remove("hidden");
+    app.classList.add("hidden");
+  }
+
+});
+
 const dias=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 dias.forEach(d=>diaEditar.innerHTML+=`<option>${d}</option>`);
 
