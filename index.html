@@ -556,6 +556,11 @@ function activar(tab){
 
 }
 
+// CONECTAR BOTONES NAV
+tabHome.onclick = () => activar("home");
+tabEditar.onclick = () => activar("editar");
+tabCompra.onclick = () => activar("compra");
+
 loginBtn.onclick=()=>auth.signInWithEmailAndPassword(email.value,password.value);
 googleBtn.onclick=async()=>{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider);};
 logoutBtn.onclick=()=>auth.signOut();
